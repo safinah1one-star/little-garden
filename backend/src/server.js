@@ -4,7 +4,7 @@ require("./config/passport");
 
 const path = require("path");
 const express = require("express");
-const cors = require("cors");
+// const cors = require("cors");  // <-- INI HAPUS / COMMENT
 const passport = require("passport");
 const connectDB = require("./config/db");
 
@@ -16,17 +16,29 @@ const app = express();
 connectDB();
 
 // =======================
-// 2. CORS: BOLEH KE SEMUA
+// 2. CORS: BOLEH KE SEMUA (MANUAL)
 // =======================
-
-// kasih header CORS ke semua request (GET, POST, OPTIONS, dll)
-app.use(cors());
-
-// khusus OPTIONS (preflight), balas 204 supaya browser puas
 app.use((req, res, next) => {
+  // Izinkan semua origin
+  res.header("Access-Control-Allow-Origin", "*");
+
+  // Method yang diizinkan
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+
+  // Header yang boleh dipakai di request
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  // Preflight request (OPTIONS) kita jawab di sini
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204); // No Content
+    return res.sendStatus(204); // No Content, tapi header di atas tetap sudah kepasang
   }
+
   next();
 });
 
@@ -40,7 +52,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 
-// kalau tidak pakai upload, baris ini boleh dihapus
+// kalau tidak pakai upload, baris ini boleh tetap di-comment
 // app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // =======================
@@ -76,5 +88,4 @@ app.use((req, res) => res.status(404).json({ message: "Not Found" }));
 // =======================
 // 6. EXPORT UNTUK VERCEL
 // =======================
-// JANGAN pakai app.listen di sini
 module.exports = app;
