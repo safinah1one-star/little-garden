@@ -22,8 +22,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // **PENTING**: jawab preflight OPTIONS secara eksplisit
-app.options("*", cors(corsOptions)); // kalau di Express 5 error, pakai "/*" saja
-// app.options("/*", cors(corsOptions)); // kalau "*" bikin error, pakai ini
+//app.options("*", cors(corsOptions)); // kalau di Express 5 error, pakai "/*" saja
+app.options("/*", cors(corsOptions)); // kalau "*" bikin error, pakai ini
 
 // 3. Body parser & lain-lain
 app.set("trust proxy", true);
