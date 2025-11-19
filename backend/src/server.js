@@ -3,7 +3,6 @@ require("dotenv").config();
 require("./config/passport");
 
 const express = require("express");
-const cors = require("cors");
 const passport = require("passport");
 const connectDB = require("./config/db");
 
@@ -12,18 +11,28 @@ const app = express();
 // 1. Koneksi DB
 connectDB();
 
-// 2. SETUP CORS (UNTUK SEMUA FRONTEND, TANPA SEBUT DOMAIN)
-const corsOptions = {
-  origin: "*", // boleh dari mana saja
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+// 2. CORS manual, TANPA route "*"
+app.use((req, res, next) => {
+  // Boleh diakses dari frontend mana saja
+  res.header("Access-Control-Allow-Origin", "*");
+  // Metode yang diizinkan
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  // Header yang diizinkan
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 
-app.use(cors(corsOptions));
+  // Jawab preflight langsung
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
 
-// **PENTING**: jawab preflight OPTIONS secara eksplisit
-//app.options("*", cors(corsOptions)); // kalau di Express 5 error, pakai "/*" saja
-app.options("/*", cors(corsOptions)); // kalau "*" bikin error, pakai ini
+  next();
+});
 
 // 3. Body parser & lain-lain
 app.set("trust proxy", true);
