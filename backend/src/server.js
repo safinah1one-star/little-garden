@@ -3,43 +3,34 @@ require("dotenv").config();
 require("./config/passport");
 
 const express = require("express");
+const cors = require("cors");
 const passport = require("passport");
 const connectDB = require("./config/db");
 
 const app = express();
 
-// 1. KONEKSI DB
+// 1. Koneksi DB
 connectDB();
 
-// 2. CORS GLOBAL (BOLEH DARI MANA SAJA)
-app.use((req, res, next) => {
-  // izinkan SEMUA origin
-  res.setHeader("Access-Control-Allow-Origin", "*");
+// 2. SETUP CORS (UNTUK SEMUA FRONTEND, TANPA SEBUT DOMAIN)
+const corsOptions = {
+  origin: "*", // boleh dari mana saja
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-  // method yang boleh dipakai
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-  );
+app.use(cors(corsOptions));
 
-  // header yang boleh dikirim browser
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
+// **PENTING**: jawab preflight OPTIONS secara eksplisit
+app.options("*", cors(corsOptions)); // kalau di Express 5 error, pakai "/*" saja
+// app.options("/*", cors(corsOptions)); // kalau "*" bikin error, pakai ini
 
-  // kalau ini preflight (OPTIONS), balas di sini
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204); // penting: header di atas sudah kepasang
-  }
-
-  next();
-});
-
-// 3. BODY PARSER & LAINNYA
+// 3. Body parser & lain-lain
 app.set("trust proxy", true);
+
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
+
 app.use(passport.initialize());
 
 // 4. ROUTES
@@ -60,20 +51,15 @@ app.get("/api/healthz", (req, res) => res.send("OK"));
 // 5. ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error("ERROR MIDDLEWARE:", err);
-  // header CORS tetap ada di error
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
-  });
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Internal Server Error" });
 });
 
 // 404
-app.use((req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.status(404).json({ message: "Not Found" });
-});
+app.use((req, res) => res.status(404).json({ message: "Not Found" }));
 
-// 6. LOCAL DEV
+// 6. LOCAL (npm run dev)
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
   app.listen(PORT, () => {
